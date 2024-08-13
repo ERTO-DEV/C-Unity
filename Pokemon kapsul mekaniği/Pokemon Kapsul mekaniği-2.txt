@@ -1,0 +1,61 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class KapsulCollision : MonoBehaviour
+{
+    [SerializeField] private Text LunaText;
+    [SerializeField] private Text azuraText;
+
+    [SerializeField] private ParticleSystem hitParticle;
+    [SerializeField] private DataContainer dataContainer;
+    [SerializeField] private AudioClip ses;
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Hayvan1")
+        {
+            ShowHitParticle(collision.contacts[0].point);
+            Destroy(collision.gameObject);
+            dataContainer.Lunasayısı += 1;
+            UpdateScoreText();
+            Destroy(this.gameObject);
+            AudioSource.PlayClipAtPoint(ses, transform.position);
+        }
+
+        if (collision.gameObject.tag == "Azura")
+        {
+            ShowHitParticle(collision.contacts[0].point);
+            Destroy(collision.gameObject);
+            dataContainer.azurasayısı += 1;
+            UpdateScoreTextazura();
+            Destroy(this.gameObject);
+            AudioSource.PlayClipAtPoint(ses, transform.position);
+        }
+    }
+
+
+    void ShowHitParticle(Vector3 position)
+    {
+        if (hitParticle != null)
+        {
+            ParticleSystem particle = Instantiate(hitParticle, position, Quaternion.identity);
+            Destroy(particle.gameObject, particle.main.duration);
+        }
+    }
+
+    void UpdateScoreText()
+    {
+        if (LunaText != null)
+        {
+            LunaText.text = "Luna: " + dataContainer.Lunasayısı.ToString();
+        }
+    }
+
+    void UpdateScoreTextazura()
+    {
+        if (LunaText != null)
+        {
+            LunaText.text = "Azura: " + dataContainer.Lunasayısı.ToString();
+        }
+    }
+}

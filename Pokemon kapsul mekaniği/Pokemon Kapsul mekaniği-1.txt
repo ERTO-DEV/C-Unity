@@ -1,0 +1,135 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Kapsul : MonoBehaviour
+{
+    [SerializeField] private GameObject kapsulPrefab;
+    [SerializeField] private GameObject toplamakapsulPrefab;
+    [SerializeField] private float forceAmount = 10f;
+    [SerializeField] private float rayLength = 50f;
+    [SerializeField] private DataContainer dataContainer;
+    [SerializeField] private Camera cam;
+    [SerializeField] private GameObject envanter;
+    [SerializeField] private GameObject KapsulSayısı;
+    [SerializeField] private Text kaspustext;
+    [SerializeField] private AudioClip ses;
+
+
+    public bool atacak = false;
+
+    public GameObject spawnArea;
+    public int initialKapsulCount = 5;
+    public int additionalKapsulCount = 3;
+    private float spawnTimer = 40f;
+    private float currentSpawnTimer;
+
+    void Start()
+    {
+        SpawnInitialKapsuls();
+        currentSpawnTimer = spawnTimer;
+    }
+
+    void Update()
+    {
+
+        kaspustext.text = dataContainer.kapsul.ToString();
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            atacak = !atacak;
+            KapsulSayısı.SetActive(!KapsulSayısı.activeSelf);
+        }
+
+        if (Input.GetMouseButtonDown(0) && atacak)
+        {
+            if (dataContainer != null && dataContainer.kapsul >= 1)
+            {
+                AudioSource.PlayClipAtPoint(ses, transform.position);
+                CreateKapsulAndApplyForce();
+                dataContainer.kapsul -= 1;
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            envanter.SetActive(!envanter.activeSelf);
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            CollectKapsuls();
+        }
+
+        currentSpawnTimer -= Time.deltaTime;
+        if (currentSpawnTimer <= 0f)
+        {
+            SpawnAdditionalKapsuls();
+            currentSpawnTimer = spawnTimer;
+        }
+    }
+
+    void SpawnInitialKapsuls()
+    {
+        for (int i = 0; i < initialKapsulCount; i++)
+        {
+            SpawnKapsulInArea();
+        }
+    }
+
+    void SpawnAdditionalKapsuls()
+    {
+        for (int i = 0; i < additionalKapsulCount; i++)
+        {
+            SpawnKapsulInArea();
+        }
+    }
+
+    void SpawnKapsulInArea()
+    {
+        if (spawnArea != null)
+        {
+            Bounds spawnBounds = spawnArea.GetComponent<Collider>().bounds;
+
+            Vector3 randomPosition = new Vector3(
+                Random.Range(spawnBounds.min.x, spawnBounds.max.x),
+                1f,
+                Random.Range(spawnBounds.min.z, spawnBounds.max.z)
+            );
+
+            Instantiate(toplamakapsulPrefab, randomPosition, Quaternion.identity);
+        }
+        else
+        {
+            Debug.LogError("Spawn alanı belirtilmemiş!");
+        }
+    }
+
+    void CreateKapsulAndApplyForce()
+    {
+        GameObject kapsul = Instantiate(kapsulPrefab, transform.position, Quaternion.identity);
+
+        Rigidbody rb = kapsul.GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            Vector3 forceDirection = (cam.transform.forward + Vector3.up * 0.3f).normalized;
+            rb.AddForce(forceDirection * forceAmount, ForceMode.Impulse);
+
+            Destroy(kapsul, 4f);
+        }
+    }
+
+    void CollectKapsuls()
+    {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, 3f); 
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider.CompareTag("kapsul"))
+            {
+                Destroy(collider.gameObject);
+                dataContainer.kapsul += 1;
+            }
+        }
+    }
+}
