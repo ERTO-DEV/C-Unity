@@ -1,0 +1,357 @@
+using UnityEngine;
+using UnityEngine.UI;
+using Photon; // PUN 1
+using System.Collections; 
+
+public class BallController : Photon.MonoBehaviour
+{
+    [SerializeField] private float forceAmount = 10f;
+    [SerializeField] private float driblinggucu = 10f;
+    [SerializeField] private float upwardForceAmount = 5f;
+    [SerializeField] private float passForceAmount = 20f;
+    [SerializeField] private float chipForceAmount = 15f;
+    [SerializeField] private float chipUpwardForceAmount = 10f;
+    [SerializeField] private float sideForceAmount = 10f; 
+    private GameObject playerCube;
+    private bool isDribbling = false; 
+    private bool isChargingShot = false;
+    private float shotCharge = 0f;
+    private const float maxShotCharge = 100f;
+    private const float chargeRate = maxShotCharge / 3.5f; 
+    private Text chargeText; 
+
+    void Start()
+    {
+       
+        playerCube = GameObject.FindWithTag("PlayerCube");
+        
+        chargeText = playerCube.GetComponentInChildren<Text>();
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+            foreach (var hitCollider in hitColliders)
+            {
+                if (hitCollider.CompareTag("Ball"))
+                {
+                    PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                    if (ballPhotonView != null && ballPhotonView.isMine)
+                    {
+                        StartCoroutine(ApplySideForces(hitCollider));
+                    }
+                }
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+            foreach (var hitCollider in hitColliders)
+            {
+                if (hitCollider.CompareTag("Ball"))
+                {
+                    PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                    if (ballPhotonView != null)
+                    {
+                        ballPhotonView.TransferOwnership(PhotonNetwork.player.ID);
+
+                        if (ballPhotonView.isMine)
+                        {
+                            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
+                            {
+                                ApplyChipForce(hitCollider);
+                            }
+                            else
+                            {
+                                ApplyForce(hitCollider, forceAmount, true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+            foreach (var hitCollider in hitColliders)
+            {
+                if (hitCollider.CompareTag("Ball"))
+                {
+                    PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                    if (ballPhotonView != null)
+                    {
+                        ballPhotonView.TransferOwnership(PhotonNetwork.player.ID);
+                    }
+                    ApplyForce(hitCollider, forceAmount / 5, false);
+                }
+            }
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+            foreach (var hitCollider in hitColliders)
+            {
+                if (hitCollider.CompareTag("Ball"))
+                {
+                    PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                    if (ballPhotonView != null)
+                    {
+                        ballPhotonView.TransferOwnership(PhotonNetwork.player.ID);
+                    }
+                    ApplyForce(hitCollider, forceAmount / 5, false);
+                }
+            }
+        }
+
+        // Sağ tıklama ile top sürme
+        // if (Input.GetMouseButtonDown(1))
+        // {
+        //     isDribbling = true;
+        // }
+        // if (Input.GetMouseButtonUp(1))
+        // {
+        //      isDribbling = false;
+        //  }
+
+        //  if (isDribbling)
+        //  {
+        //     DribbleBall();
+        //  }
+
+        
+        if (Input.GetMouseButtonDown(0))
+        {
+            PassBall();
+        }
+
+        
+        if (Input.GetKey(KeyCode.LeftAlt))
+        {
+            isChargingShot = true;
+            shotCharge += chargeRate * Time.deltaTime;
+            if (shotCharge > maxShotCharge)
+            {
+                shotCharge = maxShotCharge;
+            }
+        }
+        else
+        {
+            if (isChargingShot)
+            {
+                isChargingShot = false;
+                ExecuteChargedShot();
+                shotCharge = 0f;
+            }
+        }
+
+        
+        if (chargeText != null)
+        {
+            chargeText.text = Mathf.RoundToInt(shotCharge).ToString();
+        }
+
+       
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            ApplyRightForce();
+        }
+
+       
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            ApplyLeftForce();
+        }
+
+        
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ApplyUpwardForce();
+        }
+    }
+
+    void ApplyForce(Collider hitCollider, float force, bool applyUpwardForce)
+    {
+        Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+        if (ballRigidbody != null)
+        {
+            float currentForceAmount = force + (shotCharge / 5f);
+            Vector3 forceDirection = playerCube.transform.forward * currentForceAmount;
+            if (applyUpwardForce)
+            {
+                forceDirection += Vector3.up * upwardForceAmount;
+            }
+            ballRigidbody.AddForce(forceDirection, ForceMode.Impulse);
+        }
+    }
+
+    void ApplyChipForce(Collider hitCollider)
+    {
+        Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+        if (ballRigidbody != null)
+        {
+            float currentChipForceAmount = chipForceAmount + (shotCharge / 5f);
+            Vector3 chipDirection = playerCube.transform.forward * currentChipForceAmount + Vector3.up * chipUpwardForceAmount;
+            ballRigidbody.AddForce(chipDirection, ForceMode.Impulse);
+        }
+    }
+
+    void DribbleBall()
+    {
+      
+        Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Ball"))
+            {
+                PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                if (ballPhotonView != null && ballPhotonView.isMine)
+                {
+                    Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+                    if (ballRigidbody != null)
+                    {
+                        Vector3 forceDirection = playerCube.transform.forward * driblinggucu;
+                        ballRigidbody.AddForce(forceDirection, ForceMode.Force);
+                    }
+                }
+            }
+        }
+    }
+
+    void PassBall()
+    {
+        Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Ball"))
+            {
+                PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                if (ballPhotonView != null && ballPhotonView.isMine)
+                {
+                    Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+                    if (ballRigidbody != null)
+                    {
+                        Vector3 passDirection = playerCube.transform.forward * passForceAmount;
+                        ballRigidbody.AddForce(passDirection, ForceMode.Impulse);
+                    }
+                }
+            }
+        }
+    }
+
+    void ExecuteChargedShot()
+    {
+        Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Ball"))
+            {
+                PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                if (ballPhotonView != null && ballPhotonView.isMine)
+                {
+                    Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+                    if (ballRigidbody != null)
+                    {
+                        float currentForceAmount = forceAmount + (shotCharge / 5f);
+                        Vector3 forceDirection = playerCube.transform.forward * currentForceAmount + Vector3.up * upwardForceAmount;
+                        ballRigidbody.AddForce(forceDirection, ForceMode.Impulse);
+                    }
+                }
+            }
+        }
+    }
+
+    void ApplyRightForce()
+    {
+        Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Ball"))
+            {
+                PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                if (ballPhotonView != null && ballPhotonView.isMine)
+                {
+                    Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+                    if (ballRigidbody != null)
+                    {
+                        Vector3 rightForce = playerCube.transform.right * sideForceAmount;
+                        ballRigidbody.AddForce(rightForce, ForceMode.Impulse);
+                    }
+                }
+            }
+        }
+    }
+
+    void ApplyLeftForce()
+    {
+        Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Ball"))
+            {
+                PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                if (ballPhotonView != null && ballPhotonView.isMine)
+                {
+                    Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+                    if (ballRigidbody != null)
+                    {
+                        Vector3 leftForce = -playerCube.transform.right * sideForceAmount;
+                        ballRigidbody.AddForce(leftForce, ForceMode.Impulse);
+                    }
+                }
+            }
+        }
+    }
+
+    void ApplyUpwardForce()
+    {
+        Collider[] hitColliders = Physics.OverlapBox(playerCube.transform.position, playerCube.transform.localScale / 2, playerCube.transform.rotation);
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.CompareTag("Ball"))
+            {
+                PhotonView ballPhotonView = hitCollider.GetComponent<PhotonView>();
+
+                if (ballPhotonView != null && ballPhotonView.isMine)
+                {
+                    Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+                    if (ballRigidbody != null)
+                    {
+                        Vector3 upwardForce = Vector3.up * upwardForceAmount / 1.6f;
+                        ballRigidbody.AddForce(upwardForce, ForceMode.Impulse);
+                    }
+                }
+            }
+        }
+    }
+
+    IEnumerator ApplySideForces(Collider hitCollider)
+    {
+        Rigidbody ballRigidbody = hitCollider.GetComponent<Rigidbody>();
+        if (ballRigidbody != null)
+        {
+            
+            Vector3 rightForce = playerCube.transform.right * sideForceAmount;
+            ballRigidbody.AddForce(rightForce, ForceMode.Impulse);
+            yield return new WaitForSeconds(0.3f); 
+
+            
+            Vector3 leftForce = -playerCube.transform.right * sideForceAmount;
+            ballRigidbody.AddForce(leftForce, ForceMode.Impulse);
+        }
+    }
+}
