@@ -1,0 +1,185 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class marketekin : MonoBehaviour
+{
+    [SerializeField] private DataContainer db;
+    private bool degiliyor = false;
+    [SerializeField] private GameObject tuccarekran;
+    [SerializeField] private GameObject ebas;
+    [SerializeField] private Button kapatbtn;
+    [SerializeField] private Text paratext;
+
+    [SerializeField] private GameObject ustbar;
+    [SerializeField] private GameObject enerjibar;
+    [SerializeField] private GameObject karakter;
+
+    [SerializeField] private Button urunsat1;
+    [SerializeField] private Button urunal1;
+    [SerializeField] private Text urun1sayı;
+
+    [SerializeField] private Button urunsat2;
+    [SerializeField] private Button urunal2;
+    [SerializeField] private Text urun2sayı;
+
+    [SerializeField] private Button urunsat3;
+    [SerializeField] private Button urunal3;
+    [SerializeField] private Text urun3sayı;
+
+    [SerializeField] private Button urunsat4;
+    [SerializeField] private Button urunal4;
+    [SerializeField] private Text urun4sayı;
+
+    void Start()
+    {
+        tuccarekran.SetActive(false);
+
+        kapatbtn.onClick.AddListener(kapat);
+        urunsat1.onClick.AddListener(vurunsat1);
+        urunal1.onClick.AddListener(vurunal1);
+
+        urunsat2.onClick.AddListener(vurunsat2);
+        urunal2.onClick.AddListener(vurunal2);
+
+        urunsat3.onClick.AddListener(vurunsat3);
+        urunal3.onClick.AddListener(vurunal3);
+
+        urunsat4.onClick.AddListener(vurunsat4);
+        urunal4.onClick.AddListener(vurunal4);
+    }
+
+    void kapat()
+    {
+        tuccarekran.SetActive(false);
+        karakter.SetActive(true);
+    }
+
+    void vurunal1()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.para >= 8 * urunAdedi)
+        {
+            db.domates += urunAdedi;
+            db.para -= 8 * urunAdedi;
+        }
+    }
+
+    void vurunsat1()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.domates >= urunAdedi)
+        {
+            db.domates -= urunAdedi;
+            db.para += 5 * urunAdedi;
+        }
+    }
+
+    void vurunal2()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.para >= 20 * urunAdedi)
+        {
+            db.lahana += urunAdedi;
+            db.para -= 20 * urunAdedi;
+        }
+    }
+
+    void vurunsat2()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.lahana >= urunAdedi)
+        {
+            db.lahana -= urunAdedi;
+            db.para += 15 * urunAdedi;
+        }
+    }
+
+    void vurunal3()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.para >= 10 * urunAdedi)
+        {
+            db.havuç += urunAdedi;
+            db.para -= 10 * urunAdedi;
+        }
+    }
+
+    void vurunsat3()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.havuç >= urunAdedi)
+        {
+            db.havuç -= urunAdedi;
+            db.para += 8 * urunAdedi;
+        }
+    }
+
+    void vurunal4()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.para >= 45 * urunAdedi)
+        {
+            db.mısır += urunAdedi;
+            db.para -= 45 * urunAdedi;
+        }
+    }
+
+    void vurunsat4()
+    {
+        int urunAdedi = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 5 : 1; // Shift tuşuna basılıysa 5, değilse 1 al
+        if (db.mısır >= urunAdedi)
+        {
+            db.mısır -= urunAdedi;
+            db.para += 30 * urunAdedi;
+        }
+    }
+
+    private void Update()
+    {
+        if (degiliyor && Input.GetKeyDown(KeyCode.E))
+        {
+            tuccarekran.SetActive(true);
+            ebas.SetActive(false);
+            ustbar.SetActive(false);
+            enerjibar.SetActive(false);
+            karakter.SetActive(false);
+        }
+
+        urun1sayı.text = db.domates.ToString();
+        urun2sayı.text = db.lahana.ToString();
+        urun3sayı.text = db.havuç.ToString();
+        urun4sayı.text = db.mısır.ToString();
+        paratext.text = db.para.ToString();
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            degiliyor = true;
+            ebas.SetActive(true);
+
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            tuccarekran.SetActive(false);
+            degiliyor = false;
+            ebas.SetActive(false);
+
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+
+            ustbar.SetActive(true);
+            enerjibar.SetActive(true);
+            karakter.SetActive(true);
+        }
+    }
+}
