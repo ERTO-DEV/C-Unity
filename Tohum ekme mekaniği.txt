@@ -1,0 +1,168 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class tohumekme : MonoBehaviour
+{
+    [SerializeField] private DataContainer db;
+    [SerializeField] private GameObject tarla;
+    public bool degiliyor = false;
+    [SerializeField] private bool tohumekildi = false;
+
+  
+
+    [SerializeField] private GameObject domatesbitki1;
+    [SerializeField] private GameObject domatesbitki2;
+    [SerializeField] private GameObject domatesbitki3;
+    [SerializeField] private GameObject domatesbitki4;
+    [SerializeField] private GameObject domatesbitki5;
+    [SerializeField] private GameObject domatesbitki6;
+
+    [SerializeField] private GameObject domates;
+    [SerializeField] private GameObject domates2;
+
+
+    [SerializeField] private bool tohum1ekildi;
+    [SerializeField] private bool tohum2ekildi;
+    [SerializeField] private bool tohum3ekildi;
+    [SerializeField] private bool tohum4ekildi;
+    [SerializeField] private bool tohumvar;
+
+    [SerializeField] private Material bitkiMateryali;
+    [SerializeField] private Material normalmateryal;
+
+    private bool tohumbuyudu = false;
+
+    void Start()
+    {
+
+    }
+
+    private void FixedUpdate()
+    {
+        if (tohum1ekildi && !tohum2ekildi && !tohum3ekildi && !tohum4ekildi && tohumvar && !tohumbuyudu && db.domatesHızlı)
+        {
+            StartCoroutine(TohumBüyüme());
+        }else if(tohum1ekildi && !tohum2ekildi && !tohum3ekildi && !tohum4ekildi && tohumvar && !tohumbuyudu && db.domatesFazla)
+        {
+            StartCoroutine(TohumBüyüme2());
+        }else if(tohum1ekildi && !tohum2ekildi && !tohum3ekildi && !tohum4ekildi && tohumvar && !tohumbuyudu && db.domatesNormal)
+        {
+            StartCoroutine(TohumBüyüme3());
+        }
+    }
+
+    IEnumerator TohumBüyüme3()
+    {
+        
+        domates.SetActive(true);
+        tohumbuyudu = true;
+        yield return new WaitForSeconds(20f);
+        domates.SetActive(false);
+        domates2.SetActive(true);
+        yield return new WaitForSeconds(25f);
+        domates2.SetActive(false);
+
+        domatesbitki1.SetActive(true);
+        domatesbitki2.SetActive(true);
+        domatesbitki3.SetActive(true);
+        domatesbitki4.SetActive(true);
+        domatesbitki5.SetActive(true);
+        domatesbitki6.SetActive(true);
+
+        tarla.GetComponent<Renderer>().material = normalmateryal;
+        tohumvar = false;
+        tohum1ekildi = false;
+        tohumbuyudu = false;
+    }
+
+    IEnumerator TohumBüyüme2()
+    {
+       
+        domates.SetActive(true);
+        tohumbuyudu = true;
+        yield return new WaitForSeconds(20f);
+        domates.SetActive(false);
+        domates2.SetActive(true);
+        yield return new WaitForSeconds(25f);
+        domates2.SetActive(false);
+
+        domatesbitki1.SetActive(true);
+        domatesbitki2.SetActive(true);
+        domatesbitki3.SetActive(true);
+        domatesbitki4.SetActive(true);
+        domatesbitki5.SetActive(true);
+        domatesbitki6.SetActive(true);
+
+        tarla.GetComponent<Renderer>().material = normalmateryal;
+        tohumvar = false;
+        tohum1ekildi = false;
+        tohumbuyudu = false;
+        
+    }
+
+    IEnumerator TohumBüyüme()
+    {
+        
+        domates.SetActive(true);
+        tohumbuyudu = true;
+        yield return new WaitForSeconds(10f);
+        domates.SetActive(false);
+        domates2.SetActive(true);
+        yield return new WaitForSeconds(14f);
+        domates2.SetActive(false);
+
+        domatesbitki1.SetActive(true);
+        domatesbitki2.SetActive(true);
+        domatesbitki3.SetActive(true);
+        domatesbitki4.SetActive(true);
+        domatesbitki5.SetActive(true);
+        domatesbitki6.SetActive(true);
+
+        tarla.GetComponent<Renderer>().material = normalmateryal;
+        tohumvar = false;
+        tohum1ekildi = false;
+        tohumbuyudu = false;
+    }
+
+    void Update()
+    {
+        if (tohumvar)
+        {
+            tarla.GetComponent<Renderer>().material = bitkiMateryali;
+        }
+        else
+        {
+            tarla.GetComponent<Renderer>().material = normalmateryal;
+        }
+
+
+
+
+       
+
+        if (Input.GetKeyDown(KeyCode.Space) && degiliyor)
+        {
+            if (db.domatestohumu >= 1 && db.tohum1 && !tohumvar)
+            {
+                db.domatestohumu -= 1;
+                tohum1ekildi = true;
+                tohumvar = true;
+            }
+            
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            degiliyor = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        degiliyor = false;
+    }
+}
