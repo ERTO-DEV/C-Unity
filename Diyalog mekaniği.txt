@@ -1,0 +1,154 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Diyalog : MonoBehaviour
+{
+    [SerializeField] private GameObject diyalogbox;
+    [SerializeField] private GameObject enerjibar;
+    [SerializeField] private GameObject ebas;
+    [SerializeField] private Text diyologisimtext;
+    [SerializeField] private string diyologisim;
+    [SerializeField] private GameObject diyologcamera;
+    [SerializeField] private GameObject karakter;
+    [SerializeField] private Button closebutton;
+
+    [SerializeField] private Button gecbutton;
+    [SerializeField] private GameObject gecbuttonobje;
+    [SerializeField] private Text diyalogtext;
+
+    [SerializeField] private string yazı;
+    [SerializeField] private string yazı2;
+
+    private bool konusabilirsin = false;
+    private int currentIndex = 0;
+    public float yazmaHizi = 0.1f;
+    private int harfSayac = 0; 
+
+    public AudioClip yazmaSesi; 
+
+    private AudioSource sesKaynagi;
+
+    void Start()
+    {
+        closebutton.onClick.AddListener(close);
+        gecbutton.onClick.AddListener(yenidayalog);
+
+        diyalogbox.SetActive(false);
+        enerjibar.SetActive(true);
+        ebas.SetActive(false);
+
+       
+        sesKaynagi = GetComponent<AudioSource>();
+    }
+
+    void close()
+    {
+        ebas.SetActive(false);
+        konusabilirsin = false;
+        diyalogbox.SetActive(false);
+        enerjibar.SetActive(true);
+        diyalogtext.text = "";
+        currentIndex = 0;
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        gecbuttonobje.SetActive(true);
+        diyalogtext.text = "";
+        karakter.SetActive(true);
+        diyologcamera.SetActive(false);
+    }
+
+    void yenidayalog()
+    {
+        gecbuttonobje.SetActive(false);
+        currentIndex = 0;
+        StartCoroutine(YaziYazdir2());
+    }
+
+    void Update()
+    {
+        if (diyalogbox.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            close();
+        }
+        if (Input.GetKeyDown(KeyCode.E) && konusabilirsin)
+        {
+            diyologisimtext.text = diyologisim.ToString();
+            diyalogbox.SetActive(true);
+            enerjibar.SetActive(false);
+            StartCoroutine(YaziYazdir());
+            ebas.SetActive(false);
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            karakter.SetActive(false);
+            diyologcamera.SetActive(true);
+        }
+    }
+
+    IEnumerator YaziYazdir()
+    {
+        while (currentIndex < yazı.Length)
+        {
+            diyalogtext.text = yazı.Substring(0, currentIndex + 1);
+            currentIndex++;
+          
+            if (yazmaSesi != null)
+            {
+                if (harfSayac % 3 == 0) 
+                {
+                    sesKaynagi.PlayOneShot(yazmaSesi);
+                }
+                harfSayac++;
+            }
+            yield return new WaitForSeconds(yazmaHizi);
+        }
+    }
+
+    IEnumerator YaziYazdir2()
+    {
+        while (currentIndex < yazı2.Length)
+        {
+            diyalogtext.text = yazı2.Substring(0, currentIndex + 1);
+            currentIndex++;
+            if (yazmaSesi != null)
+            {
+                if (harfSayac % 3 == 0) 
+                {
+                    sesKaynagi.PlayOneShot(yazmaSesi);
+                }
+                harfSayac++;
+            }
+            yield return new WaitForSeconds(yazmaHizi);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            ebas.SetActive(true);
+            konusabilirsin = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            ebas.SetActive(false);
+            konusabilirsin = false;
+            diyalogbox.SetActive(false);
+            enerjibar.SetActive(true);
+            diyalogtext.text = "";
+            currentIndex = 0;
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            gecbuttonobje.SetActive(true);
+            diyalogtext.text = "";
+            karakter.SetActive(true);
+            diyologcamera.SetActive(false);
+            harfSayac = 0; 
+        }
+    }
+}
