@@ -1,0 +1,87 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class hayvanai : MonoBehaviour
+{
+    [SerializeField] private float hareketHizi = 5f;
+    [SerializeField] private float maxRotasyonHizi = 60f;
+    [SerializeField] private float minRotasyonHizi = 20f;
+
+
+    [SerializeField] private GameObject sinirlayici;
+
+    void Start()
+    {
+        Invoke("Dondur", Random.Range(4f, 7f));
+    }
+
+    void Update()
+    {
+        HareketEt();
+        SinirlariKontrolEt();
+    }
+
+    void HareketEt()
+    {
+        transform.Translate(Vector3.forward * hareketHizi * Time.deltaTime);
+
+        Vector3 yon = (transform.position + transform.forward * 10f) - transform.position;
+        Quaternion yeniRotasyon = Quaternion.LookRotation(yon);
+        transform.rotation = Quaternion.Slerp(transform.rotation, yeniRotasyon, Random.Range(minRotasyonHizi, maxRotasyonHizi) * Time.deltaTime);
+    }
+
+    void SinirlariKontrolEt()
+    {
+        if (sinirlayici != null)
+        {
+           
+            Vector3 sinirlayiciPozisyon = sinirlayici.transform.position;
+            Vector3 sinirlayiciBoyut = sinirlayici.transform.localScale;
+
+          
+            float clampedX = Mathf.Clamp(transform.position.x, sinirlayiciPozisyon.x - sinirlayiciBoyut.x / 2, sinirlayiciPozisyon.x + sinirlayiciBoyut.x / 2);
+            float clampedZ = Mathf.Clamp(transform.position.z, sinirlayiciPozisyon.z - sinirlayiciBoyut.z / 2, sinirlayiciPozisyon.z + sinirlayiciBoyut.z / 2);
+
+            transform.position = new Vector3(clampedX, transform.position.y, clampedZ);
+
+           
+            if (transform.position.x != clampedX || transform.position.z != clampedZ)
+            {
+                float geriDonmeYonu = Mathf.Atan2(transform.position.z - clampedZ, transform.position.x - clampedX) * Mathf.Rad2Deg;
+                StartCoroutine(Don(geriDonmeYonu));
+            }
+        }
+    }
+
+    void Dondur()
+    {
+        Invoke("Dondur", Random.Range(4f, 7f));
+
+        // Rasgele bir yöne yavaşça dön
+        float rastgeleYon = Random.Range(0f, 360f);
+        StartCoroutine(Don(rastgeleYon));
+    }
+
+    IEnumerator Don(float hedefYon)
+    {
+        float sure = Random.Range(4f, 6f);
+        float baslangicZaman = Time.time;
+
+        while (Time.time - baslangicZaman < sure)
+        {
+            float hedefRotasyon = Mathf.LerpAngle(transform.eulerAngles.y, hedefYon, (Time.time - baslangicZaman) / sure);
+            transform.rotation = Quaternion.Euler(0f, hedefRotasyon, 0f);
+            yield return null;
+        }
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("duvar"))
+        {
+            float yeniYon = Random.Range(0f, 360f);
+            StartCoroutine(Don(yeniYon));
+        }
+    }
+}
